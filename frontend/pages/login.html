@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Authentication — Login — BPES</title>
+</head>
+<body>
+
+<div id="screen-login" class="figma-split-container">
+  
+  <!-- Left: 710px Campus Panel (Figma Desktop) -->
+  <div class="figma-campus-panel">
+    <div class="figma-campus-header">
+      <div class="figma-brand-logo">
+        <i class="fas fa-graduation-cap"></i>
+      </div>
+      <div class="figma-brand-text">BPES Portal</div>
+    </div>
+
+    <div class="figma-campus-copy">
+      <h2>Your school, connected</h2>
+      <p>A shared school portal for administrators, teachers, and students.</p>
+    </div>
+  </div>
+
+  <!-- Right: Form Panel with Exact Login Card -->
+  <div class="figma-form-panel">
+    
+    <!-- Top Bar with Back Button -->
+    <div class="figma-auth-topbar">
+      <div class="d-flex align-items-center gap-2">
+        <div class="bpes-logo-icon" style="background: var(--color-primary-light); color: var(--color-primary);">
+          <i class="fas fa-graduation-cap"></i>
+        </div>
+        <span class="fw-bold" style="font-family: var(--font-brand); font-size: 20px; color: var(--color-primary);">BPES Portal</span>
+      </div>
+
+      <button class="figma-auth-back-btn" onclick="loadPage('welcome')" title="Return to Portal Welcome">
+        <i class="fas fa-arrow-left"></i>
+        <span>Back</span>
+      </button>
+    </div>
+
+    <!-- Center Card -->
+    <div class="figma-card-wrapper">
+      <div class="figma-auth-card">
+        
+        <div class="card-header border-0 bg-transparent p-0 mb-4">
+          <h1 class="figma-auth-card-title">Welcome to BPES Portal</h1>
+          <p class="figma-auth-card-subtitle mb-0">Sign in to your school attendance portal.</p>
+        </div>
+
+        <div id="login-alert-box"></div>
+
+        <form id="unified-login-form" onsubmit="handleUnifiedLogin(event)">
+          
+          <div class="bpes-form-group">
+            <label for="login-username" class="bpes-label">Username</label>
+            <div class="bpes-input-wrapper">
+              <i class="fas fa-user bpes-input-icon"></i>
+              <input type="text" id="login-username" class="bpes-input with-icon" placeholder="Enter your username" required autocomplete="username">
+            </div>
+          </div>
+
+          <div class="bpes-form-group">
+            <label for="login-password" class="bpes-label">Password</label>
+            <div class="bpes-input-wrapper">
+              <i class="fas fa-lock bpes-input-icon"></i>
+              <input type="password" id="login-password" class="bpes-input with-icon" placeholder="••••••••" required autocomplete="current-password">
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end mb-4">
+            <a href="#" class="small text-decoration-none" style="color: var(--color-text-secondary); font-size: 13px;" onclick="alert('Please contact the BPES school administrator to reset your credentials.'); return false;">
+              Forgot Password?
+            </a>
+          </div>
+
+          <button type="submit" id="unified-login-btn" class="bpes-btn-primary w-100 py-3" style="border-radius: var(--radius-input);">
+            <span>Log In</span>
+          </button>
+        </form>
+
+        <div class="text-center mt-4 pt-2" style="font-size: 14px;">
+          <span style="color: var(--color-text-secondary);">Don’t have an Account? </span>
+          <a href="#register" class="fw-bold" style="color: var(--color-primary);" onclick="loadPage('register')">
+            Register
+          </a>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal — Welcome — BPES</title>
+</head>
+<body>
+
+<div id="screen-welcome" class="figma-split-container">
+  
+  <!-- Left: 710px Campus Panel (Figma Desktop) -->
+  <div class="figma-campus-panel">
+    <div class="figma-campus-header">
+      <div class="figma-brand-logo">
+        <i class="fas fa-graduation-cap"></i>
+      </div>
+      <div class="figma-brand-text">BPES Portal</div>
+    </div>
+
+    <div class="figma-campus-copy">
+      <h2>Welcome to your school portal</h2>
+      <p>Access classroom attendance and school records in one place.</p>
+    </div>
+  </div>
+
+  <!-- Right: Form Panel with Portal Entry Card -->
+  <div class="figma-form-panel">
+    
+    <div class="figma-auth-topbar">
+      <div class="d-flex align-items-center gap-2">
+        <div class="bpes-logo-icon" style="background: var(--color-primary-light); color: var(--color-primary);">
+          <i class="fas fa-graduation-cap"></i>
+        </div>
+        <span class="fw-bold" style="font-family: var(--font-brand); font-size: 20px; color: var(--color-primary);">BPES Portal</span>
+      </div>
+    </div>
+
+    <div class="figma-card-wrapper">
+      <div class="figma-auth-card">
+        
+        <h1 class="figma-auth-card-title">Welcome to BPES Portal</h1>
+        <p class="figma-auth-card-subtitle">
+          Welcome to your school attendance portal for administrators, teachers, and students.
+        </p>
+
+        <div class="d-flex flex-column gap-3">
+          <button class="bpes-btn-primary w-100 py-3" style="border-radius: var(--radius-input);" onclick="loadPage('login')">
+            <span>Sign in</span>
+          </button>
+
+          <div class="text-center pt-2" style="font-size: 14px;">
+            <span style="color: var(--color-text-secondary);">Don’t have an account? </span>
+            <a href="#register" class="fw-bold" style="color: var(--color-primary);" onclick="loadPage('register')">
+              Register
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+</body>
+</html>

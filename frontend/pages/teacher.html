@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teacher Portal — BPES</title>
+</head>
+<body>
+
+<div id="screen-teacher" class="min-vh-100 d-flex flex-column">
+
+  <!-- Desktop Top Navbar (72px) — brand + role badge + avatar + logout, no tab pills -->
+  <header class="bpes-navbar">
+    <div class="bpes-brand" onclick="showTeacherTab('dashboard')">
+      <div class="bpes-logo-icon"><i class="fas fa-graduation-cap"></i></div>
+      <div class="bpes-brand-title" id="teacher-brand-title">Dashboard</div>
+    </div>
+    <!-- Center nav pills intentionally removed — navigation is in the sidebar -->
+    <div class="bpes-nav-right">
+      <div class="bpes-role-badge" id="teacher-nav-badge">Teacher</div>
+      <div class="bpes-avatar" id="teacher-avatar">T</div>
+      <button class="bpes-btn-logout" onclick="logout()"><span>Logout</span></button>
+    </div>
+  </header>
+
+  <!-- Mobile Top Header (72px) -->
+  <div class="bpes-mobile-header">
+    <button class="bpes-hamburger-btn" onclick="openTeacherMobileDrawer()" aria-label="Open menu">
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="bpes-mobile-brand">
+      <div class="bpes-mobile-context">TEACHER / BPES PORTAL</div>
+      <div class="bpes-mobile-title" id="teacher-mobile-header-title">Dashboard</div>
+    </div>
+    <button class="bpes-hamburger-btn" onclick="logout()" title="Logout">
+      <i class="fas fa-arrow-right-from-bracket"></i>
+    </button>
+  </div>
+
+  <!-- Main Layout Area (Desktop: 2-Column Sidebar + Content) -->
+  <div class="bpes-desktop-layout flex-grow-1">
+    
+    <!-- Left Sidebar (260px) -->
+    <aside class="bpes-sidebar">
+      <!-- Sidebar Brand -->
+      <div class="bpes-sidebar-brand d-flex align-items-center gap-2 pb-3 mb-1 border-bottom">
+        <div class="bpes-logo-icon" style="background: var(--color-primary); color: #fff; width: 38px; height: 38px; font-size: 18px; border-radius: 10px;">
+          <i class="fas fa-graduation-cap"></i>
+        </div>
+        <div>
+          <div class="fw-bold" style="font-family: var(--font-brand); font-size: 19px; color: var(--color-primary); line-height: 1.1;">BPES Portal</div>
+          <div class="text-muted fw-semibold" style="font-size: 11px; letter-spacing: 0.5px;">TEACHER PORTAL</div>
+        </div>
+      </div>
+
+      <div class="bpes-sidebar-header">
+        <div class="bpes-sidebar-subtitle">Faculty landing</div>
+        <h2 class="bpes-sidebar-title" id="teacher-sidebar-title">Dashboard</h2>
+        <p class="bpes-sidebar-desc" id="teacher-sidebar-desc">
+          Classroom attendance metrics, student status override, and leave review.
+        </p>
+      </div>
+
+      <nav class="bpes-sidebar-nav">
+        <div class="bpes-sidebar-item active" id="sidebar-tch-dashboard" onclick="showTeacherTab('dashboard')">
+          <i class="fas fa-chart-pie"></i>
+          <span>Dashboard</span>
+        </div>
+        <div class="bpes-sidebar-item" id="sidebar-tch-attendance" onclick="showTeacherTab('attendance')">
+          <i class="fas fa-clipboard-check"></i>
+          <span>Attendance</span>
+        </div>
+        <div class="bpes-sidebar-item" id="sidebar-tch-export" onclick="showTeacherTab('export')">
+          <i class="fas fa-file-export"></i>
+          <span>Export Attendance</span>
+        </div>
+        <div class="bpes-sidebar-item" id="sidebar-tch-leave" onclick="showTeacherTab('leave')">
+          <i class="fas fa-envelope-open-text"></i>
+          <span>Student Leave Requests</span>
+        </div>
+      </nav>
+
+      <!-- Sidebar User Footer & Logout -->
+      <div class="mt-auto pt-3 border-top d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-2 overflow-hidden">
+          <div class="bpes-avatar" style="background: var(--color-primary); color: #fff; width: 34px; height: 34px; font-size: 14px; border-radius: 50%;" id="teacher-avatar">T</div>
+          <div class="overflow-hidden">
+            <div class="small fw-bold text-dark text-truncate" id="teacher-sidebar-user-name">Teacher 1</div>
+            <div class="text-muted text-truncate" style="font-size: 11px;" id="teacher-sidebar-user-email">Faculty Member</div>
+          </div>
+        </div>
+        <button class="btn btn-sm btn-outline-danger border-0 p-2" onclick="logout()" title="Logout">
+          <i class="fas fa-arrow-right-from-bracket"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Panel -->
+    <main class="bpes-main-content">
+      <div id="teacher-alert-box"></div>
+
+      <!-- Welcome Banner -->
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+          <h1 class="fs-3 fw-bold text-dark mb-1" id="teacher-greeting">Good morning, Teacher!</h1>
+          <p class="text-muted small mb-0" id="teacher-welcome-desc">
+            Welcome back! Here's what's happening with your classes today.
+          </p>
+        </div>
+        <div class="px-3 py-2 rounded-pill bg-white border d-flex align-items-center gap-2 shadow-sm text-muted small fw-medium">
+          <i class="fas fa-calendar text-success"></i>
+          <span id="teacher-today-date">Today, 08:30 AM</span>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- TAB 1: Dashboard (Figma Screen 8)                             -->
+      <!-- ============================================================ -->
+      <section id="tch-tab-dashboard">
+        
+        <!-- 4 Metric KPI Cards (Per Figma Screen 8) -->
+        <div class="bpes-stat-grid mb-4">
+          <div class="bpes-stat-card">
+            <div class="bpes-stat-icon">
+              <i class="fas fa-users"></i>
+            </div>
+            <div>
+              <div class="bpes-stat-label">Total enrolled</div>
+              <div class="bpes-stat-value" id="tch-kpi-total">0</div>
+              <div class="bpes-stat-sub">Across all sections</div>
+            </div>
+          </div>
+
+          <div class="bpes-stat-card">
+            <div class="bpes-stat-icon">
+              <i class="fas fa-user-check"></i>
+            </div>
+            <div>
+              <div class="bpes-stat-label">Present / on-time</div>
+              <div class="bpes-stat-value" id="tch-kpi-present">0</div>
+              <div class="bpes-stat-sub" id="tch-kpi-present-sub">0% attendance</div>
+            </div>
+          </div>
+
+          <div class="bpes-stat-card">
+            <div class="bpes-stat-icon warning">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div>
+              <div class="bpes-stat-label">Late scans</div>
+              <div class="bpes-stat-value text-warning" id="tch-kpi-late">0</div>
+              <div class="bpes-stat-sub">After cutoff</div>
+            </div>
+          </div>
+
+          <div class="bpes-stat-card">
+            <div class="bpes-stat-icon danger">
+              <i class="fas fa-user-xmark"></i>
+            </div>
+            <div>
+              <div class="bpes-stat-label">Absent</div>
+              <div class="bpes-stat-value text-danger" id="tch-kpi-absent">0</div>
+              <div class="bpes-stat-sub">Unexcused</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2 Column Grid: Attendance Trend Card & Recent Scans Card -->
+        <div class="row g-4">
+          
+          <!-- Left: attendance-trend-card (Figma Screen 8) -->
+          <div class="col-xl-5 col-lg-6">
+            <div class="bpes-card mb-4" id="attendance-trend-card">
+              <div class="bpes-card-header">
+                <div>
+                  <h3 class="bpes-card-title">Weekly attendance trend</h3>
+                  <div class="bpes-card-subtitle">Attendance rate past 5 school days</div>
+                </div>
+              </div>
+
+              <!-- Bar chart presentation per Figma -->
+              <div class="p-3">
+                <div class="d-flex justify-content-between align-items-end" style="height: 180px; padding-top: 20px;">
+                  <div class="text-center d-flex flex-column align-items-center" style="flex: 1;">
+                    <span class="small fw-bold text-success mb-1">95%</span>
+                    <div style="width: 32px; height: 130px; background: #14532D; border-radius: 8px 8px 4px 4px;"></div>
+                    <span class="small text-muted mt-2 fw-medium">Mon</span>
+                  </div>
+                  <div class="text-center d-flex flex-column align-items-center" style="flex: 1;">
+                    <span class="small fw-bold text-success mb-1">92%</span>
+                    <div style="width: 32px; height: 122px; background: #14532D; border-radius: 8px 8px 4px 4px;"></div>
+                    <span class="small text-muted mt-2 fw-medium">Tue</span>
+                  </div>
+                  <div class="text-center d-flex flex-column align-items-center" style="flex: 1;">
+                    <span class="small fw-bold text-success mb-1">88%</span>
+                    <div style="width: 32px; height: 110px; background: #14532D; border-radius: 8px 8px 4px 4px;"></div>
+                    <span class="small text-muted mt-2 fw-medium">Wed</span>
+                  </div>
+                  <div class="text-center d-flex flex-column align-items-center" style="flex: 1;">
+                    <span class="small fw-bold text-success mb-1">96%</span>
+                    <div style="width: 32px; height: 135px; background: #14532D; border-radius: 8px 8px 4px 4px;"></div>
+                    <span class="small text-muted mt-2 fw-medium">Thu</span>
+                  </div>
+                  <div class="text-center d-flex flex-column align-items-center" style="flex: 1;">
+                    <span class="small fw-bold text-success mb-1">90%</span>
+                    <div style="width: 32px; height: 118px; background: #14532D; border-radius: 8px 8px 4px 4px;"></div>
+                    <span class="small text-muted mt-2 fw-medium">Fri</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top text-muted small">
+                <span>Target: 90% attendance</span>
+                <span class="text-success fw-semibold"><i class="fas fa-arrow-trend-up me-1"></i> +2.4% vs last week</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: recent-scans-card (Figma Screen 8) -->
+          <div class="col-xl-7 col-lg-6">
+            <div class="bpes-card" id="recent-scans-card">
+              <div class="bpes-card-header flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-2">
+                  <h3 class="bpes-card-title">Recent scans</h3>
+                  <span class="badge rounded-pill bg-light text-success border px-2 py-1" id="recent-scans-pill">0 students</span>
+                </div>
+                <button class="bpes-btn-outline bpes-btn-sm" onclick="showTeacherTab('attendance')">
+                  <span>View attendance</span>
+                  <i class="fas fa-arrow-right ms-1"></i>
+                </button>
+              </div>
+
+              <div class="bpes-table-wrapper">
+                <table class="bpes-table">
+                  <thead>
+                    <tr>
+                      <th>Student</th>
+                      <th>Status</th>
+                      <th>Room</th>
+                      <th>Time</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tch-recent-logs-tbody">
+                    <tr>
+                      <td colspan="4" class="text-center py-4 text-muted">Loading recent scans...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- TAB 2: Attendance with Override Panel (Figma Screen 9)        -->
+      <!-- ============================================================ -->
+      <section id="tch-tab-attendance" class="d-none">
+        
+        <!-- Filter Controls per Figma Screen 9 -->
+        <div class="bpes-card mb-4" id="attendance-filter-card">
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex flex-wrap align-items-center gap-3">
+              <div style="min-width: 180px;">
+                <label class="bpes-label mb-1">Class</label>
+                <select id="teacher-section-filter" class="bpes-select" onchange="loadTeacherAttendance()">
+                  <option value="">All Sections</option>
+                </select>
+              </div>
+
+              <div style="min-width: 160px;">
+                <label class="bpes-label mb-1">Date</label>
+                <input type="date" id="teacher-analytics-date" class="bpes-input" onchange="loadTeacherAttendance()" style="height: 44px;">
+              </div>
+            </div>
+
+            <div>
+              <button class="bpes-btn-outline bpes-btn-sm" onclick="loadTeacherAttendance()">
+                <i class="fas fa-rotate me-1"></i> Refresh
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2 Column Layout: Attendance Table & Override Panel (Figma Screen 9) -->
+        <div class="row g-4">
+          
+          <!-- Left: attendance-card (approx 65% width) -->
+          <div class="col-xl-8 col-lg-7">
+            <div class="bpes-card" id="attendance-card">
+              <div class="bpes-card-header flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-2">
+                  <h3 class="bpes-card-title">Class attendance</h3>
+                  <span class="badge rounded-pill bg-light text-success border px-2 py-1" id="attendance-count-pill">0 records</span>
+                </div>
+              </div>
+
+              <div class="bpes-table-wrapper">
+                <table class="bpes-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>LRN</th>
+                      <th>Room</th>
+                      <th>Status</th>
+                      <th>Timestamp</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tch-attendance-tbody">
+                    <tr>
+                      <td colspan="6" class="text-center py-4 text-muted">Loading attendance records...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="d-flex justify-content-between align-items-center mt-3 pt-2 text-muted small">
+                <span id="tch-attendance-count-label">Showing records</span>
+                <span class="text-muted">Auto-refreshes every 5s</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: override-panel (Figma Screen 9) -->
+          <div class="col-xl-4 col-lg-5">
+            <div class="bpes-card" id="override-panel">
+              <div class="bpes-card-header">
+                <div>
+                  <h3 class="bpes-card-title">Override attendance</h3>
+                  <div class="bpes-card-subtitle">Adjust student status manually.</div>
+                </div>
+              </div>
+
+              <!-- Selected student display box -->
+              <div class="p-3 rounded-4 mb-3" style="background: var(--color-bg); border: 1px solid var(--color-border);" id="override-selected-box">
+                <div class="fw-bold text-dark fs-6" id="override-student-name">Select a student</div>
+                <div class="small text-muted" id="override-meta">Click "Override" on any row to begin</div>
+              </div>
+
+              <form id="override-form" onsubmit="submitAttendanceOverride(event)">
+                <input type="hidden" id="override-log-id">
+                
+                <!-- Status Pill Selector Buttons -->
+                <div class="bpes-form-group">
+                  <label class="bpes-label">Attendance status</label>
+                  <div class="d-flex flex-wrap gap-2 mt-1">
+                    <button type="button" class="btn btn-sm btn-outline-success px-3 py-2 rounded-pill fw-medium override-status-btn active" data-status="present" onclick="setOverrideStatus('present')">Present</button>
+                    <button type="button" class="btn btn-sm btn-outline-warning px-3 py-2 rounded-pill fw-medium override-status-btn" data-status="late" onclick="setOverrideStatus('late')">Late</button>
+                    <button type="button" class="btn btn-sm btn-outline-danger px-3 py-2 rounded-pill fw-medium override-status-btn" data-status="absent" onclick="setOverrideStatus('absent')">Absent</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary px-3 py-2 rounded-pill fw-medium override-status-btn" data-status="excused" onclick="setOverrideStatus('excused')">Excused</button>
+                  </div>
+                  <input type="hidden" id="override-status-select" value="present">
+                </div>
+
+                <div class="bpes-form-group">
+                  <label for="override-reason" class="bpes-label">Override reason</label>
+                  <textarea id="override-reason" class="bpes-input" style="height: 88px; padding: 10px 14px;" placeholder="Reason for status adjustment..." required></textarea>
+                </div>
+
+                <button type="submit" id="override-submit-btn" class="bpes-btn-primary w-100 py-3 mt-2" disabled>
+                  <span>Confirm override</span>
+                </button>
+              </form>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- TAB 3: Export Attendance Sheet (Figma Screen 10)              -->
+      <!-- ============================================================ -->
+      <section id="tch-tab-export" class="d-none">
+        
+        <!-- Filter and Action Bar per Figma Screen 10 -->
+        <div class="bpes-card mb-4 no-print">
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex flex-wrap align-items-center gap-3">
+              <div style="min-width: 170px;">
+                <label class="bpes-label mb-1">Date</label>
+                <input type="date" id="teacher-export-date" class="bpes-input" style="height: 44px;">
+              </div>
+              <div style="min-width: 180px;">
+                <label class="bpes-label mb-1">Room</label>
+                <select id="teacher-export-room" class="bpes-select" style="height: 44px;">
+                  <option value="">All Classrooms</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+              <button class="bpes-btn-outline" onclick="printAttendanceReport()">
+                <i class="fas fa-print me-1"></i> Print
+              </button>
+              <button class="bpes-btn-primary" onclick="exportAttendanceCsv()">
+                <i class="fas fa-download me-1"></i> Download CSV
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- preview-table inside export-card per Figma Screen 10 -->
+        <div class="bpes-card" id="export-card">
+          <div class="bpes-card-header">
+            <div>
+              <h3 class="bpes-card-title">Attendance sheet preview</h3>
+              <div class="bpes-card-subtitle">Official Department of Education daily classroom log</div>
+            </div>
+          </div>
+
+          <div class="bpes-table-wrapper" id="preview-table">
+            <table class="bpes-table">
+              <thead>
+                <tr>
+                  <th>No.</th>
+                  <th>LRN</th>
+                  <th>Student full name</th>
+                  <th>Year &amp; section</th>
+                  <th>Room</th>
+                  <th>Status</th>
+                  <th>Timestamp</th>
+                </tr>
+              </thead>
+              <tbody id="tch-export-tbody">
+                <tr>
+                  <td colspan="7" class="text-center py-4 text-muted">Select date and click Preview or Print.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- TAB 4: Student Leave Requests (Figma Screen 11)               -->
+      <!-- ============================================================ -->
+      <section id="tch-tab-leave" class="d-none">
+        
+        <!-- 4 Summary Cards per Figma Screen 11 -->
+        <div class="bpes-stat-grid mb-4">
+          <div class="bpes-stat-card">
+            <div class="bpes-stat-icon warning">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div>
+              <div class="bpes-stat-label">Pending</div>
+              <div class="bpes-stat-value text-warning" id="tch-leave-pending-count">0</div>
+              <div class="bpes-stat-sub">Awaiting review</div>
+            </div>
+          </div>
+
+          <div class="bpes-stat-card">
+            <div class="bpes-stat-icon">
+              <i class="fas fa-circle-check"></i>
+            </div>
+            <div>
+              <div class="bpes-stat-label">Approved</div>
+              <div class="bpes-stat-value text-success" id="tch-leave-approved-count">0</div>
+              <div class="bpes-stat-sub">Excuse granted</div>
+            </div>
+          </div>
+
+          <div class="bpes-stat-card">
+            <div class="bpes-stat-icon danger">
+              <i class="fas fa-circle-xmark"></i>
+            </div>
+            <div>
+              <div class="bpes-stat-label">Declined</div>
+              <div class="bpes-stat-value text-danger" id="tch-leave-declined-count">0</div>
+              <div class="bpes-stat-sub">Insufficient proof</div>
+            </div>
+          </div>
+
+          <div class="bpes-stat-card">
+            <div class="bpes-stat-icon">
+              <i class="fas fa-envelope-open-text"></i>
+            </div>
+            <div>
+              <div class="bpes-stat-label">Total</div>
+              <div class="bpes-stat-value" id="tch-leave-total-count">0</div>
+              <div class="bpes-stat-sub">This grading period</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- leave-requests-card table per Figma Screen 11 -->
+        <div class="bpes-card" id="leave-requests-card">
+          <div class="bpes-card-header flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2">
+              <h3 class="bpes-card-title">Student leave requests</h3>
+              <span class="badge rounded-pill bg-light text-success border px-2 py-1" id="leave-requests-pill">0 requests</span>
+            </div>
+            <button class="bpes-btn-outline bpes-btn-sm" onclick="loadTeacherLeaveRequests()">
+              <i class="fas fa-rotate me-1"></i> Refresh
+            </button>
+          </div>
+
+          <div class="bpes-table-wrapper">
+            <table class="bpes-table">
+              <thead>
+                <tr>
+                  <th>Student / LRN</th>
+                  <th>Subject</th>
+                  <th>Dates</th>
+                  <th>Reason</th>
+                  <th>Proof</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tch-leave-table-tbody">
+                <tr>
+                  <td colspan="7" class="text-center py-4 text-muted">Loading leave requests...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Mobile Drawer Menu (Figma Screen 32) -->
+  <div class="bpes-mobile-drawer" id="teacherMobileDrawer">
+    <div class="bpes-mobile-drawer-header">
+      <div class="d-flex align-items-center gap-2">
+        <i class="fas fa-graduation-cap text-success fs-5"></i>
+        <span class="fw-bold text-dark">Teacher Menu</span>
+      </div>
+      <button class="btn btn-sm btn-light border-0" onclick="closeTeacherMobileDrawer()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="bpes-mobile-drawer-body">
+      <div class="bpes-mobile-drawer-item active" onclick="showTeacherTab('dashboard'); closeTeacherMobileDrawer();">
+        <i class="fas fa-chart-pie"></i>
+        <span>Dashboard</span>
+      </div>
+      <div class="bpes-mobile-drawer-item" onclick="showTeacherTab('attendance'); closeTeacherMobileDrawer();">
+        <i class="fas fa-clipboard-check"></i>
+        <span>Attendance</span>
+      </div>
+      <div class="bpes-mobile-drawer-item" onclick="showTeacherTab('export'); closeTeacherMobileDrawer();">
+        <i class="fas fa-file-export"></i>
+        <span>Export Attendance</span>
+      </div>
+      <div class="bpes-mobile-drawer-item" onclick="showTeacherTab('leave'); closeTeacherMobileDrawer();">
+        <i class="fas fa-envelope-open-text"></i>
+        <span>Student Leave Requests</span>
+      </div>
+      <hr>
+      <div class="bpes-mobile-drawer-item text-danger" onclick="logout()">
+        <i class="fas fa-arrow-right-from-bracket"></i>
+        <span>Logout</span>
+      </div>
+    </div>
+  </div>
+  <div class="bpes-mobile-backdrop" id="teacherMobileBackdrop" onclick="closeTeacherMobileDrawer()"></div>
+
+</div>
+
+</body>
+</html>
