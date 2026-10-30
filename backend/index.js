@@ -32,9 +32,10 @@ const PORT = process.env.PORT || 3000;
 app.use(helmet({ contentSecurityPolicy: false }));
 
 // In production: restrict CORS to the deployed origin via ALLOWED_ORIGIN env var.
-// In development: allow all origins for local testing convenience.
+// Falls back to '*' if ALLOWED_ORIGIN is not yet set (monolith same-origin is safe).
+// In development: always allow all origins for local testing convenience.
 const corsOrigin = process.env.NODE_ENV === 'production'
-  ? (process.env.ALLOWED_ORIGIN || false)
+  ? (process.env.ALLOWED_ORIGIN || '*')
   : '*';
 app.use(cors({
   origin: corsOrigin,

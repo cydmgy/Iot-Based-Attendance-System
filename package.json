@@ -1,0 +1,16 @@
+{
+  "name": "bpes-attendance-system",
+  "version": "1.0.0",
+  "description": "BPES Attendance System - RFID-based student attendance portal",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "install-backend": "cd backend && npm install"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "ISC"
+}
+
