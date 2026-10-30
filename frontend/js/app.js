@@ -1,12 +1,23 @@
 // ============================================================
 // BPES Portal - Core Application Router & State Management
-// Batasan Paaralang Elementarya ng San
 // ============================================================
 
 function getApiBase() {
-  // In production the frontend is served by the same Express process,
-  // so the API is always on the same origin (no port override needed).
-  // Locally the dev server runs on :3000, which is also the correct origin.
+  if (typeof window === 'undefined') return 'http://localhost:3000';
+  const hostname = window.location.hostname || 'localhost';
+  const protocol = window.location.protocol.startsWith('http') ? window.location.protocol : 'http:';
+  const port = window.location.port;
+
+  // If running locally (VS Code Live Server on 5500, Vite on 5173, or file://)
+  if (hostname === 'localhost' || hostname === '127.0.0.1' || !window.location.protocol.startsWith('http')) {
+    // If the frontend is already served directly by Express on port 3000
+    if (port === '3000') {
+      return window.location.origin;
+    }
+    // Route API requests to the Express backend server on port 3000 to eliminate 405 Method Not Allowed errors
+    return `${protocol}//${hostname}:3000`;
+  }
+
   return window.location.origin;
 }
 
@@ -63,6 +74,10 @@ function restoreAuthSession() {
       const user = JSON.parse(savedUserJson);
       if (role === 'student') {
         studentUser = { ...studentUser, ...user };
+        if (user.full_name) {
+          studentUser.name = user.full_name;
+          studentUser.full_name = user.full_name;
+        }
       } else if (role === 'teacher') {
         currentTeacherUser = { ...currentTeacherUser, ...user };
       }
@@ -218,9 +233,10 @@ function onSelectStudentProfile(studentId) {
   if (!studentId) return;
   const matched = students.find(s => s.id === studentId);
   if (matched) {
-    const lrnInput = document.getElementById('student-login-lrn');
-    const pinInput = document.getElementById('student-login-pin');
-    if (lrnInput) lrnInput.value = matched.student_id;
+    const userInput = document.getElementById('login-username') || document.getElementById('student-login-lrn');
+    const pinInput = document.getElementById('login-password') || document.getElementById('student-login-pin');
+    // Fill with student's full name
+    if (userInput) userInput.value = matched.full_name || matched.student_id;
     if (pinInput) {
       const defaultPin = matched.student_id && matched.student_id.length >= 4 
         ? matched.student_id.slice(-4) 
@@ -241,17 +257,94 @@ function togglePasswordVisibility(inputId, btn) {
   }
 }
 
+// ── Authentication Feedback Modal Popups ──────────────────────
+
+function showAuthErrorPopup({ title, message, type = 'error', isNotFound = false }) {
+  const backdrop = document.getElementById('bpes-auth-modal-backdrop');
+  const iconWrap = document.getElementById('bpes-auth-modal-icon-wrap');
+  const titleEl = document.getElementById('bpes-auth-modal-title');
+  const msgEl = document.getElementById('bpes-auth-modal-message');
+  const actionsEl = document.getElementById('bpes-auth-modal-actions');
+
+  if (!backdrop) {
+    // Fallback if modal HTML is not mounted
+    alert(`${title}\n\n${message}`);
+    return;
+  }
+
+  if (titleEl) titleEl.textContent = title;
+  if (msgEl) msgEl.textContent = message;
+
+  if (iconWrap) {
+    if (isNotFound) {
+      iconWrap.className = 'bpes-auth-modal-icon not-found mb-3';
+      iconWrap.innerHTML = '<i class="fas fa-user-xmark"></i>';
+    } else {
+      iconWrap.className = 'bpes-auth-modal-icon incorrect-pw mb-3';
+      iconWrap.innerHTML = '<i class="fas fa-key"></i>';
+    }
+  }
+
+  if (actionsEl) {
+    if (isNotFound) {
+      actionsEl.innerHTML = `
+        <button type="button" class="bpes-btn-primary w-100 py-3" style="border-radius: var(--radius-input);" onclick="closeAuthErrorPopup(); loadPage('register');">
+          <i class="fas fa-user-plus me-2"></i> Register New Account
+        </button>
+        <button type="button" class="btn btn-outline-secondary w-100 py-2 mt-1" style="border-radius: var(--radius-input);" onclick="closeAuthErrorPopup()">
+          Check Name &amp; Try Again
+        </button>
+      `;
+    } else {
+      actionsEl.innerHTML = `
+        <button type="button" class="bpes-btn-primary w-100 py-3" style="border-radius: var(--radius-input);" onclick="closeAuthErrorPopup(true)">
+          <i class="fas fa-rotate-left me-2"></i> Try Again
+        </button>
+      `;
+    }
+  }
+
+  backdrop.classList.add('active');
+}
+
+function closeAuthErrorPopup(focusPassword = false) {
+  const backdrop = document.getElementById('bpes-auth-modal-backdrop');
+  if (backdrop) {
+    backdrop.classList.remove('active');
+  }
+  if (focusPassword) {
+    const passInput = document.getElementById('login-password');
+    if (passInput) {
+      passInput.value = '';
+      passInput.focus();
+    }
+  } else {
+    const userInput = document.getElementById('login-username');
+    if (userInput) userInput.focus();
+  }
+}
+
 // ── Unified Authentication Handlers (Figma Screen 1 & 5) ──────────────
 
 async function handleUnifiedLogin(e) {
   e.preventDefault();
-  const alertEl = document.getElementById('login-alert');
-  const btn = document.getElementById('btn-submit-login');
+  const alertEl = document.getElementById('login-alert-box') || document.getElementById('login-alert');
+  const btn = document.getElementById('unified-login-btn') || document.getElementById('btn-submit-login');
   const userInput = document.getElementById('login-username');
   const passInput = document.getElementById('login-password');
 
   const username = (userInput?.value || '').trim();
   const password = (passInput?.value || '').trim();
+
+  if (!username || !password) {
+    showAuthErrorPopup({
+      title: 'Missing Credentials',
+      message: 'Please enter both your full name and password to sign in.',
+      type: 'warning',
+      isNotFound: false
+    });
+    return;
+  }
 
   if (alertEl) alertEl.innerHTML = '';
   if (btn) {
@@ -260,71 +353,135 @@ async function handleUnifiedLogin(e) {
   }
 
   try {
-    // 1. If username is admin
+    // 1. Administrator authentication
     if (username.toLowerCase() === 'admin') {
-      const res = await axios.post(`${API_BASE}/api/auth/admin`, { username, password });
-      if (res.data.success) {
-        sessionStorage.setItem('auth_role', 'admin');
-        sessionStorage.setItem('auth_token', res.data.token);
-        sessionStorage.setItem('auth_user', JSON.stringify(res.data.user || { role: 'admin' }));
-        axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
-        await loadPage('admin');
-        return;
-      }
-    }
-
-    // 2. If username contains '@', try teacher auth first
-    if (username.includes('@')) {
-      const res = await axios.post(`${API_BASE}/api/auth/teacher`, { email: username, password });
-      if (res.data.success) {
-        sessionStorage.setItem('auth_role', 'teacher');
-        sessionStorage.setItem('auth_token', res.data.token);
-        sessionStorage.setItem('auth_user', JSON.stringify(res.data.user));
-        currentTeacherUser = { ...currentTeacherUser, ...res.data.user };
-        axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
-        await loadPage('teacher');
-        return;
-      }
-    }
-
-    // 3. Try student auth by student_id/LRN + PIN/password
-    try {
-      const stdRes = await axios.post(`${API_BASE}/api/auth/student`, { student_id: username, pin: password });
-      if (stdRes.data.success) {
-        sessionStorage.setItem('auth_role', 'student');
-        sessionStorage.setItem('auth_token', stdRes.data.token);
-        sessionStorage.setItem('auth_user', JSON.stringify(stdRes.data.user));
-        studentUser = { ...studentUser, ...stdRes.data.user };
-        axios.defaults.headers.common['Authorization'] = `Bearer ${stdRes.data.token}`;
-        await loadPage('student');
-        return;
-      }
-    } catch (stdErr) {
-      // If student lookup failed, attempt teacher lookup with username as email
       try {
-        const tchRes = await axios.post(`${API_BASE}/api/auth/teacher`, { email: username, password });
-        if (tchRes.data.success) {
+        const res = await axios.post(`${API_BASE}/api/auth/admin`, { username, password });
+        if (res.data.success) {
+          sessionStorage.setItem('auth_role', 'admin');
+          sessionStorage.setItem('auth_token', res.data.token);
+          sessionStorage.setItem('auth_user', JSON.stringify(res.data.user || { role: 'admin' }));
+          axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
+          await loadPage('admin');
+          return;
+        }
+      } catch (adminErr) {
+        const code = adminErr.response?.data?.code;
+        const msg = adminErr.response?.data?.error || 'Invalid administrator password.';
+        showAuthErrorPopup({
+          title: code === 'ACCOUNT_NOT_FOUND' ? 'Account Not Found' : 'Incorrect Password',
+          message: msg,
+          isNotFound: code === 'ACCOUNT_NOT_FOUND'
+        });
+        return;
+      }
+    }
+
+    // 2. If username contains '@', authenticate via teacher email
+    if (username.includes('@')) {
+      try {
+        const res = await axios.post(`${API_BASE}/api/auth/teacher`, { email: username, password });
+        if (res.data.success) {
           sessionStorage.setItem('auth_role', 'teacher');
-          sessionStorage.setItem('auth_token', tchRes.data.token);
-          sessionStorage.setItem('auth_user', JSON.stringify(tchRes.data.user));
-          currentTeacherUser = { ...currentTeacherUser, ...tchRes.data.user };
-          axios.defaults.headers.common['Authorization'] = `Bearer ${tchRes.data.token}`;
+          sessionStorage.setItem('auth_token', res.data.token);
+          sessionStorage.setItem('auth_user', JSON.stringify(res.data.user));
+          currentTeacherUser = { ...currentTeacherUser, ...res.data.user };
+          axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
           await loadPage('teacher');
           return;
         }
       } catch (tchErr) {
-        throw stdErr;
+        const code = tchErr.response?.data?.code;
+        const msg = tchErr.response?.data?.error || 'Invalid teacher credentials.';
+        showAuthErrorPopup({
+          title: code === 'ACCOUNT_NOT_FOUND' ? 'Account Not Found' : 'Incorrect Password',
+          message: msg,
+          isNotFound: code === 'ACCOUNT_NOT_FOUND'
+        });
+        return;
       }
     }
-  } catch (err) {
-    const msg = err.response?.data?.error || err.message || 'Invalid username or password';
-    if (alertEl) {
-      alertEl.innerHTML = `
-        <div class="alert alert-danger py-2 small shadow-sm mb-3" style="border-radius: var(--radius-input);">
-          <i class="fas fa-circle-exclamation me-1"></i> ${escapeHtml(msg)}
-        </div>
-      `;
+
+    // 3. Authenticate Student by Full Name (or LRN)
+    let studentResponse = null;
+    let studentErrData = null;
+    try {
+      studentResponse = await axios.post(`${API_BASE}/api/auth/student`, {
+        full_name: username,
+        student_id: username,
+        pin: password
+      });
+    } catch (stdErr) {
+      studentErrData = stdErr.response?.data || { error: stdErr.message };
     }
+
+    if (studentResponse && studentResponse.data && studentResponse.data.success) {
+      sessionStorage.setItem('auth_role', 'student');
+      sessionStorage.setItem('auth_token', studentResponse.data.token);
+      sessionStorage.setItem('auth_user', JSON.stringify(studentResponse.data.user));
+      studentUser = { ...studentUser, ...studentResponse.data.user };
+      axios.defaults.headers.common['Authorization'] = `Bearer ${studentResponse.data.token}`;
+      await loadPage('student');
+      return;
+    }
+
+    // If student account was found but password was incorrect:
+    if (studentErrData && studentErrData.code === 'INCORRECT_PASSWORD') {
+      showAuthErrorPopup({
+        title: 'Incorrect Password',
+        message: 'The password you entered is incorrect. Please check your password and try again.',
+        isNotFound: false
+      });
+      return;
+    }
+
+    // 4. If student account was not found, check if it's a Teacher logging in by Full Name
+    let teacherResponse = null;
+    let teacherErrData = null;
+    try {
+      teacherResponse = await axios.post(`${API_BASE}/api/auth/teacher`, {
+        full_name: username,
+        name: username,
+        password: password
+      });
+    } catch (tchErr) {
+      teacherErrData = tchErr.response?.data || { error: tchErr.message };
+    }
+
+    if (teacherResponse && teacherResponse.data && teacherResponse.data.success) {
+      sessionStorage.setItem('auth_role', 'teacher');
+      sessionStorage.setItem('auth_token', teacherResponse.data.token);
+      sessionStorage.setItem('auth_user', JSON.stringify(teacherResponse.data.user));
+      currentTeacherUser = { ...currentTeacherUser, ...teacherResponse.data.user };
+      axios.defaults.headers.common['Authorization'] = `Bearer ${teacherResponse.data.token}`;
+      await loadPage('teacher');
+      return;
+    }
+
+    // If teacher account was found but password was incorrect:
+    if (teacherErrData && teacherErrData.code === 'INCORRECT_PASSWORD') {
+      showAuthErrorPopup({
+        title: 'Incorrect Password',
+        message: 'The password you entered is incorrect for this teacher account. Please try again.',
+        isNotFound: false
+      });
+      return;
+    }
+
+    // 5. Account not found in either Students or Teachers
+    showAuthErrorPopup({
+      title: 'Account Does Not Exist',
+      message: `We could not find any student or teacher account under the name "${escapeHtml(username)}". Please check the spelling, or register a new student account.`,
+      isNotFound: true
+    });
+
+  } catch (err) {
+    console.error('Unified login error:', err);
+    showAuthErrorPopup({
+      title: 'Login Error',
+      message: err.message || 'Unable to complete sign in. Please verify your connection.',
+      isNotFound: false
+    });
   } finally {
     if (btn) {
       btn.disabled = false;

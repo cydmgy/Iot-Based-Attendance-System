@@ -45,6 +45,25 @@
     </div>
   </aside>
 
+  <!-- Reusable BPES Authentication Feedback Modal -->
+  <div id="bpes-auth-modal-backdrop" class="bpes-auth-modal-backdrop" onclick="closeAuthErrorPopup()">
+    <div class="bpes-auth-modal" onclick="event.stopPropagation()">
+      <button type="button" class="bpes-auth-modal-close" onclick="closeAuthErrorPopup()" aria-label="Close dialog">
+        <i class="fas fa-times"></i>
+      </button>
+      <div id="bpes-auth-modal-icon-wrap" class="bpes-auth-modal-icon not-found mb-3">
+        <i class="fas fa-user-xmark"></i>
+      </div>
+      <h3 id="bpes-auth-modal-title" class="bpes-auth-modal-title">Account Not Found</h3>
+      <p id="bpes-auth-modal-message" class="bpes-auth-modal-desc mb-4">
+        We could not find an account with the credentials provided.
+      </p>
+      <div id="bpes-auth-modal-actions" class="d-flex flex-column gap-2">
+        <!-- Buttons injected dynamically -->
+      </div>
+    </div>
+  </div>
+
   <!-- External Libraries: Axios & Bootstrap 5 Bundle -->
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

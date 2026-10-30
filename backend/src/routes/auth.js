@@ -38,32 +38,47 @@ function verifyPassword(password, stored) {
 }
 
 // ── POST /api/auth/student ───────────────────────────────────────
-// Authenticate student by LRN (student_id) + PIN
+// Authenticate student by Full Name (or LRN / student_id) + PIN
 router.post('/student', async (req, res) => {
   try {
-    const student_id = (req.body.student_id || req.body.lrn || '').trim();
+    const identifier = (req.body.full_name || req.body.name || req.body.student_id || req.body.lrn || req.body.username || '').trim();
     const pin = (req.body.pin || req.body.password || '').trim();
 
-    if (!student_id) {
-      return res.status(400).json({ success: false, error: 'Student ID / LRN is required' });
+    if (!identifier) {
+      return res.status(400).json({ success: false, error: 'Full name or Student ID / LRN is required' });
     }
     if (!pin) {
-      return res.status(400).json({ success: false, error: 'PIN is required' });
+      return res.status(400).json({ success: false, error: 'PIN / Password is required' });
     }
 
-    // Lookup student in Supabase
-    const { data: student, error } = await supabase
+    // Lookup student in Supabase: check full_name first, then fallback to student_id
+    let student = null;
+    const { data: byName, error: errName } = await supabase
       .from('students')
       .select('id, student_id, full_name, rfid_uid, course, year_level, section, pin')
-      .eq('student_id', student_id)
+      .ilike('full_name', identifier)
       .maybeSingle();
 
-    if (error) throw error;
+    if (errName) throw errName;
+
+    if (byName) {
+      student = byName;
+    } else {
+      const { data: byId, error: errId } = await supabase
+        .from('students')
+        .select('id, student_id, full_name, rfid_uid, course, year_level, section, pin')
+        .eq('student_id', identifier)
+        .maybeSingle();
+
+      if (errId) throw errId;
+      student = byId;
+    }
 
     if (!student) {
       return res.status(404).json({
         success: false,
-        error: 'LRN not registered. Please contact admin.'
+        code: 'ACCOUNT_NOT_FOUND',
+        error: `Account does not exist. No student record found for "${identifier}".`
       });
     }
 
@@ -93,7 +108,8 @@ router.post('/student', async (req, res) => {
     if (!isPinValid) {
       return res.status(401).json({
         success: false,
-        error: `Incorrect PIN. Default PIN is the last 4 digits of your LRN (${defaultPin}).`
+        code: 'INCORRECT_PASSWORD',
+        error: `Incorrect password. Default PIN is the last 4 digits of your LRN (${defaultPin}).`
       });
     }
 
@@ -110,10 +126,11 @@ router.post('/student', async (req, res) => {
       user: {
         id: student.id,
         name: student.full_name,
+        full_name: student.full_name,
         student_id: student.student_id,
         rfid: student.rfid_uid,
-        course: student.course || 'BSIT',
-        section: student.section || 'N/A',
+        course: student.course || 'Elementary',
+        section: student.section || 'Diamond',
         year: student.year_level || 1,
         role: 'student'
       }
@@ -202,32 +219,44 @@ router.post('/register-student', async (req, res) => {
 });
 
 // ── POST /api/auth/teacher ───────────────────────────────────────
-// Authenticate teacher by email + password
+// Authenticate teacher by email OR full name + password
 router.post('/teacher', async (req, res) => {
   try {
-    const email = (req.body.email || '').trim().toLowerCase();
+    const identifier = (req.body.email || req.body.name || req.body.full_name || req.body.username || '').trim();
     const password = (req.body.password || '').trim();
 
-    if (!email) {
-      return res.status(400).json({ success: false, error: 'Email is required' });
+    if (!identifier) {
+      return res.status(400).json({ success: false, error: 'Full name or Email is required' });
     }
     if (!password) {
       return res.status(400).json({ success: false, error: 'Password is required' });
     }
 
     // Lookup instructor in Supabase
-    const { data: instructor, error } = await supabase
-      .from('instructors')
-      .select('id, full_name, email, role, password_hash')
-      .ilike('email', email)
-      .maybeSingle();
-
-    if (error) throw error;
+    let instructor = null;
+    if (identifier.includes('@')) {
+      const { data, error } = await supabase
+        .from('instructors')
+        .select('id, full_name, email, role, password_hash')
+        .ilike('email', identifier)
+        .maybeSingle();
+      if (error) throw error;
+      instructor = data;
+    } else {
+      const { data, error } = await supabase
+        .from('instructors')
+        .select('id, full_name, email, role, password_hash')
+        .ilike('full_name', identifier)
+        .maybeSingle();
+      if (error) throw error;
+      instructor = data;
+    }
 
     if (!instructor) {
       return res.status(404).json({
         success: false,
-        error: 'Teacher email not registered. Please contact admin.'
+        code: 'ACCOUNT_NOT_FOUND',
+        error: `Account does not exist. No teacher record found for "${identifier}".`
       });
     }
 
@@ -253,7 +282,8 @@ router.post('/teacher', async (req, res) => {
     if (!isValid) {
       return res.status(401).json({
         success: false,
-        error: 'Invalid password. (Default initial password is: teacher123)'
+        code: 'INCORRECT_PASSWORD',
+        error: 'Incorrect password for teacher account.'
       });
     }
 
@@ -271,6 +301,7 @@ router.post('/teacher', async (req, res) => {
       user: {
         id: instructor.id,
         name: instructor.full_name,
+        full_name: instructor.full_name,
         email: instructor.email,
         role: instructor.role || 'instructor'
       }
@@ -285,7 +316,7 @@ router.post('/teacher', async (req, res) => {
 // Authenticate admin by username (admin) + ADMIN_PASSWORD from env
 router.post('/admin', async (req, res) => {
   try {
-    const username = (req.body.username || '').trim().toLowerCase();
+    const username = (req.body.username || req.body.full_name || '').trim().toLowerCase();
     const password = (req.body.password || '').trim();
 
     const expectedUsername = 'admin';
@@ -302,10 +333,19 @@ router.post('/admin', async (req, res) => {
       isPasswordMatch = safeCompare(password, configuredPassword);
     }
 
-    if (!isUsernameMatch || !isPasswordMatch) {
+    if (!isUsernameMatch) {
+      return res.status(404).json({
+        success: false,
+        code: 'ACCOUNT_NOT_FOUND',
+        error: 'Invalid administrator username.'
+      });
+    }
+
+    if (!isPasswordMatch) {
       return res.status(401).json({
         success: false,
-        error: 'Invalid admin username or password.'
+        code: 'INCORRECT_PASSWORD',
+        error: 'Incorrect administrator password.'
       });
     }
 

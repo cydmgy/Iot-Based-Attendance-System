@@ -83,7 +83,10 @@
             <label for="reg-password" class="bpes-label">Password</label>
             <div class="bpes-input-wrapper">
               <i class="fas fa-lock bpes-input-icon"></i>
-              <input type="password" id="reg-password" class="bpes-input with-icon" placeholder="••••••••" required autocomplete="new-password">
+              <input type="password" id="reg-password" class="bpes-input with-icon with-password-toggle" placeholder="••••••••" required autocomplete="new-password">
+              <button type="button" class="bpes-password-toggle-btn" onclick="togglePasswordVisibility('reg-password', this)" aria-label="Toggle password visibility" tabindex="-1">
+                <i class="fas fa-eye"></i>
+              </button>
             </div>
           </div>
 
@@ -91,7 +94,10 @@
             <label for="reg-confirm-password" class="bpes-label">Confirm Password</label>
             <div class="bpes-input-wrapper">
               <i class="fas fa-key bpes-input-icon"></i>
-              <input type="password" id="reg-confirm-password" class="bpes-input with-icon" placeholder="••••••••" required autocomplete="new-password">
+              <input type="password" id="reg-confirm-password" class="bpes-input with-icon with-password-toggle" placeholder="••••••••" required autocomplete="new-password">
+              <button type="button" class="bpes-password-toggle-btn" onclick="togglePasswordVisibility('reg-confirm-password', this)" aria-label="Toggle password visibility" tabindex="-1">
+                <i class="fas fa-eye"></i>
+              </button>
             </div>
           </div>
 

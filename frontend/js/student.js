@@ -90,7 +90,18 @@ function showStudentTab(tab) {
 // ── Tab 1: Dashboard Overview & Tab 2: Logs Ledger ───────────
 
 async function loadStudentPortalData() {
-  const displayName = studentUser.full_name || studentUser.name || 'Student';
+  // Always prioritize and display the student's full name over their LRN
+  let displayName = studentUser.full_name || studentUser.name || '';
+  if (!displayName || displayName === 'Student' || displayName === studentUser.student_id) {
+    const matched = (students || []).find(s => s.id === studentUser.id || s.student_id === studentUser.student_id);
+    if (matched && matched.full_name) {
+      displayName = matched.full_name;
+      studentUser.full_name = matched.full_name;
+      studentUser.name = matched.full_name;
+    }
+  }
+  if (!displayName) displayName = 'Student';
+
   const displaySection = studentUser.section || '—';
   const displayLrn = studentUser.student_id || '—';
   const displayRfid = studentUser.rfid_uid || studentUser.rfid || '—';
