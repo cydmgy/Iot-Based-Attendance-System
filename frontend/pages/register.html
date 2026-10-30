@@ -56,10 +56,18 @@
         <form id="register-form" onsubmit="handleUnifiedRegister(event)">
           
           <div class="bpes-form-group">
-            <label for="reg-username" class="bpes-label">Username</label>
+            <label for="reg-username" class="bpes-label">Student ID / LRN</label>
+            <div class="bpes-input-wrapper">
+              <i class="fas fa-id-card bpes-input-icon"></i>
+              <input type="text" id="reg-username" class="bpes-input with-icon" placeholder="Enter your LRN or Student ID" required autocomplete="username">
+            </div>
+          </div>
+
+          <div class="bpes-form-group">
+            <label for="reg-fullname" class="bpes-label">Full Name</label>
             <div class="bpes-input-wrapper">
               <i class="fas fa-user bpes-input-icon"></i>
-              <input type="text" id="reg-username" class="bpes-input with-icon" placeholder="Enter your username" required autocomplete="username">
+              <input type="text" id="reg-fullname" class="bpes-input with-icon" placeholder="Enter your full name" required autocomplete="name">
             </div>
           </div>
 

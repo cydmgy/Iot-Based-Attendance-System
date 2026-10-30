@@ -134,11 +134,17 @@ router.post('/register-student', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Student ID (LRN) and Full Name are required' });
     }
 
-    // Clean and normalize RFID UID if provided (null if not registered)
-    let formattedRfid = null;
+    // Clean and normalize RFID UID if provided.
+    // If no card is registered yet, use an AUTO- placeholder so the NOT NULL
+    // constraint is satisfied. The cleanup service already purges AUTO-* accounts
+    // that remain untagged after 2 days.
+    let formattedRfid;
     if (rfid_uid && String(rfid_uid).trim() && String(rfid_uid).trim() !== '-') {
       const cleanHex = String(rfid_uid).replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
       formattedRfid = cleanHex.match(/.{1,2}/g)?.join(':') || rfid_uid.trim();
+    } else {
+      const trimmedId = String(student_id || '').trim();
+      formattedRfid = `AUTO-${trimmedId}`;
     }
 
     const trimmedStudentId = String(student_id).trim();

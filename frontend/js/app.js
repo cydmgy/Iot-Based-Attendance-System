@@ -338,6 +338,7 @@ async function handleUnifiedRegister(e) {
   const alertEl = document.getElementById('register-alert');
   const btn = document.getElementById('btn-submit-register');
   const username = document.getElementById('reg-username')?.value.trim();
+  const fullName = document.getElementById('reg-fullname')?.value.trim() || username;
   const email = document.getElementById('reg-email')?.value.trim();
   const password = document.getElementById('reg-password')?.value.trim();
   const confirmPassword = document.getElementById('reg-confirm-password')?.value.trim();
@@ -363,7 +364,8 @@ async function handleUnifiedRegister(e) {
   try {
     const res = await axios.post(`${API_BASE}/api/auth/register-student`, {
       student_id: username,
-      full_name: username,
+      full_name: fullName,
+      email: email || undefined,
       course: 'Elementary',
       year_level: 1,
       section: 'Diamond',
