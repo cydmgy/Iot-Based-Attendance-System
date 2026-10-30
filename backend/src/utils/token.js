@@ -1,10 +1,18 @@
 const crypto = require('crypto');
 
-// Secret used for HMAC signing of session tokens
+// Secret used for HMAC signing of session tokens.
+// Priority: SESSION_SECRET → SUPABASE_SERVICE_ROLE_KEY → fatal startup error.
+// Set SESSION_SECRET in your hosting platform's environment variables.
 const getSecret = () => {
-  return process.env.SESSION_SECRET ||
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    'attendance-system-default-hmac-secret-key-2026';
+  const secret = process.env.SESSION_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!secret) {
+    // Crash loudly at startup rather than silently using a weak static fallback.
+    throw new Error(
+      '[token.js] FATAL: SESSION_SECRET (or SUPABASE_SERVICE_ROLE_KEY) is not set. ' +
+      'Set SESSION_SECRET in your environment variables before starting the server.'
+    );
+  }
+  return secret;
 };
 
 /**

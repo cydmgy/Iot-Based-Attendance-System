@@ -4,14 +4,10 @@
 // ============================================================
 
 function getApiBase() {
-  const protocol = window.location.protocol.startsWith('http') ? window.location.protocol : 'http:';
-  const hostname = window.location.hostname || 'localhost';
-  const port = window.location.port;
-
-  if (port === '3000') {
-    return window.location.origin;
-  }
-  return `${protocol}//${hostname}:3000`;
+  // In production the frontend is served by the same Express process,
+  // so the API is always on the same origin (no port override needed).
+  // Locally the dev server runs on :3000, which is also the correct origin.
+  return window.location.origin;
 }
 
 const API_BASE = getApiBase();
@@ -654,41 +650,10 @@ function selectStudentDrawerTab(tab) {
 }
 
 async function ensureAuthTokenForRole(role) {
-  let token = sessionStorage.getItem('auth_token');
-  if (token) return token;
-
-  try {
-    if (role === 'admin') {
-      const res = await axios.post(`${API_BASE}/api/auth/admin`, { username: 'admin', password: 'admin123' });
-      if (res.data.success) {
-        sessionStorage.setItem('auth_token', res.data.token);
-        sessionStorage.setItem('auth_user', JSON.stringify(res.data.user || { role: 'admin' }));
-        axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
-        return res.data.token;
-      }
-    } else if (role === 'teacher') {
-      const res = await axios.post(`${API_BASE}/api/auth/teacher`, { email: 'clydemagnaye2@gmail.com', password: 'teacher123' });
-      if (res.data.success) {
-        sessionStorage.setItem('auth_token', res.data.token);
-        sessionStorage.setItem('auth_user', JSON.stringify(res.data.user));
-        currentTeacherUser = { ...currentTeacherUser, ...res.data.user };
-        axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
-        return res.data.token;
-      }
-    } else if (role === 'student') {
-      const res = await axios.post(`${API_BASE}/api/auth/student`, { student_id: '1075322008', pin: '2008' });
-      if (res.data.success) {
-        sessionStorage.setItem('auth_token', res.data.token);
-        sessionStorage.setItem('auth_user', JSON.stringify(res.data.user));
-        studentUser = { ...studentUser, ...res.data.user };
-        axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
-        return res.data.token;
-      }
-    }
-  } catch (e) {
-    console.warn('Could not auto-fetch token for role', e);
-  }
-  return null;
+  // Returns the current session token if one exists.
+  // Hardcoded credentials were removed for security — users must log in manually.
+  const token = sessionStorage.getItem('auth_token');
+  return token || null;
 }
 
 // ── Modular Page Router ───────────────────────────────────────

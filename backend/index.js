@@ -30,8 +30,14 @@ const PORT = process.env.PORT || 3000;
 // ── Security & Static Assets ────────────────────────────────────
 // Disable restrictive CSP in local dev so CDNs (icons, fonts, charts) load smoothly
 app.use(helmet({ contentSecurityPolicy: false }));
+
+// In production: restrict CORS to the deployed origin via ALLOWED_ORIGIN env var.
+// In development: allow all origins for local testing convenience.
+const corsOrigin = process.env.NODE_ENV === 'production'
+  ? (process.env.ALLOWED_ORIGIN || false)
+  : '*';
 app.use(cors({
-  origin: '*', // In production, restrict to your Vercel domain
+  origin: corsOrigin,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
 }));
 app.use(express.json());
